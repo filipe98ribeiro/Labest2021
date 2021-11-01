@@ -86,7 +86,8 @@ server <- function(input, output) {
       ggplot(bov, aes(x = index(bov), y = bov[,6])) + geom_line(color = "darkblue") +
         ggtitle(paste("Série de preços"), input$nomeacao) +
         xlab("Data") + ylab("Preço ($)") + theme(plot.title = element_text(hjust = 0.5)) + 
-        scale_x_date(date_labels = "%b %y", date_breaks = "6 months")
+        scale_x_date(date_labels = "%b %y", date_breaks = "6 months")+
+        theme_bw()
     
       })
       
@@ -97,7 +98,8 @@ server <- function(input, output) {
       ggplot(bov_ret, aes(x = index(bov_ret), y = bov_ret)) + geom_line(color = "darkblue") +
         ggtitle(paste("Série de retornos"),input$nomeacao) + xlab("Data") + ylab("Retorno") +
         theme(plot.title = element_text(hjust = 0.5)) +
-        scale_x_date(date_labels = "%b %y", date_breaks = "3 months")
+        scale_x_date(date_labels = "%b %y", date_breaks = "3 months")+
+        theme_bw()
       
       }) 
     
