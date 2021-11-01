@@ -48,7 +48,8 @@ ui <- fluidPage(
       textOutput("result1"),
       textOutput("result2"),
       textOutput("result3"),
-      plotOutput("plot1")
+      plotOutput("plot1"),
+      plotOutput("plot2")
       
     )
   )
@@ -86,10 +87,23 @@ server <- function(input, output) {
         ggtitle(paste("Série de preços"), input$nomeacao) +
         xlab("Data") + ylab("Preço ($)") + theme(plot.title = element_text(hjust = 0.5)) + 
         scale_x_date(date_labels = "%b %y", date_breaks = "6 months")
-    }) 
+    
+      })
+      
+    bov_ret <- diff(log(bov[,6]))
+    bov_ret <- bov_ret[-1,]
+    
+    output$plot2<-renderPlot({
+      ggplot(bov_ret, aes(x = index(bov_ret), y = bov_ret)) + geom_line(color = "darkblue") +
+        ggtitle(paste("Série de retornos"),input$nomeacao) + xlab("Data") + ylab("Retorno") +
+        theme(plot.title = element_text(hjust = 0.5)) +
+        scale_x_date(date_labels = "%b %y", date_breaks = "3 months")
+      
+      }) 
+    
+    })
      ### Acrescenta o grafico dos retornos ??? (Não conseguir fazer aparecer no shinny)
-    #bov_ret <- diff(log(bov[,6]))
-    #bov_ret <- bov_ret[-1,]
+    
     
     #output$plot2<-renderPlot({
       #ggplot(bov_ret, aes(x = index(bov_ret), y = bov_ret)) + geom_line(color = "darkblue") +
@@ -101,10 +115,9 @@ server <- function(input, output) {
     
     
     
-  })
+
+
 }
-
-
 
 
 
