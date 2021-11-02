@@ -4,7 +4,7 @@ library(tidyverse)
 library(plotly)
 library(forecast)
 library(quantmod)
-
+library(PerformanceAnalytics)
 
 ui <- fluidPage(
   
@@ -27,29 +27,29 @@ ui <- fluidPage(
       selectInput("nomeacao", "Acao:",#"Nomeração1"? so fiz a principio com 2 pra ve se roda ,se der pode colocar 3 ações 
                   c("PETR3.SA",
                     "VALE3.SA",
-                    "SANB11",
-                    "TRPL4",
-                    "HYPE3",
-                    "SBSP3",
-                    "EMBR3",
-                    "PGMN3",
-                    "ITUB4",
-                    "JBSS3",
-                    "RDOR3",
+                    "SANB11.SA",
+                    "TRPL4.SA",
+                    "HYPE3.SA",
+                    "SBSP3.SA",
+                    "EMBR3.SA",
+                    "PGMN3.SA",
+                    "ITUB4.SA",
+                    "JBSS3.SA",
+                    "RDOR3.SA",
                     "^BVSP")),
-      # selectInput("nomeacao2", "Acao:",
-      #c("PETR3.SA",
-       # "VALE3.SA",
-        #"SANB11",
-       # "TRPL4",
-       # "HYPE3",
-       # "SBSP3",
-       # "EMBR3",
-       # "PGMN3",
-       # "ITUB4",
-       # "JBSS3",
-       # "RDOR3",
-       # "^BVSP")),
+      selectInput("nomeacao2", "Acao:",
+                c("PETR3.SA",
+                  "VALE3.SA",
+                  "SANB11.SA",
+                  "TRPL4.SA",
+                    "HYPE3.SA",
+                  "SBSP3.SA",
+                  "EMBR3.SA",
+                  "PGMN3.SA",
+                  "ITUB4.SA",
+                  "JBSS3.SA",
+                  "RDOR3.SA",
+                  "^BVSP")),
       
       
       actionButton("do", " $$$ ")
@@ -60,8 +60,17 @@ ui <- fluidPage(
       textOutput("result1"),
       textOutput("result2"),
       textOutput("result3"),
+      textOutput("result4"),
       plotOutput("plot1"),
-      plotOutput("plot2")
+      plotOutput("plot11"),
+      plotOutput("plot2"),
+      plotOutput("plot22"),
+      plotOutput("plot3"),
+      plotOutput("plot4"),
+      tableOutput("t1"),
+      tableOutput("t3"),
+      tableOutput("t2"),
+      tableOutput("t4")
       
     )
   )
@@ -89,42 +98,44 @@ server <- function(input, output) {
     output$result3 <- renderText({
       paste("Açao escolhida:", input$nomeacao)
     })    
-    
+    output$result4 <- renderText({
+      paste("Açao escolhida:", input$nomeacao2)
+    })  
     
     bov <- getSymbols(input$nomeacao, src = "yahoo",
                       from = input$date1, to = input$date2, auto.assign = FALSE)
-    #bov2 <- getSymbols(input$nomeacao2, src = "yahoo",
-    #                   from = input$date1, to = input$date2, auto.assign = FALSE)
-    # bov_ret <- Return.calculate(bov)
-    # bov2_ret <- Return.calculate(bov2)
-    #bov_ret <- bov_ret[(-1),]
-    #bov2_ret <- bov2_ret[(-1),]
+    bov2 <- getSymbols(input$nomeacao2, src = "yahoo",
+                      from = input$date1, to = input$date2, auto.assign = FALSE)
+    bov_ret <- Return.calculate(bov)
+    bov2_ret <- Return.calculate(bov2)
+    bov_ret <- bov_ret[(-1),]
+    bov2_ret <- bov2_ret[(-1),]
     
-    #eq_weights <- c(0.5, 0.5)
-    #rets <- cbind(bov_ret, bov2_ret)
+    eq_weights <- c(0.5, 0.5)
+    rets <- cbind(bov_ret, bov2_ret)
     ######## Create a portfolio using buy and hold
-    # pf_bh <- Return.portfolio(R = rets, weights = eq_weights, verbose = TRUE)
+    pf_bh <- Return.portfolio(R = rets, weights = eq_weights, verbose = TRUE)
     ######## Create an optimized portfolio of returns
-    # opt <- portfolio.optim(rets)
+    opt <- portfolio.optim(rets)
     ## Create pf_weights
-    #(pf_weights <- opt$pw) era bom colocar os pesos nos resultados ?? 
+    pf_weights <- opt$pw #era bom colocar os pesos nos resultados ??
     ## Assign asset names
-    ## names(pf_weights) <- colnames(rets)
+    names(pf_weights) <- colnames(rets)
     # ou extractWeights(opt)
     # Print expected portfolio return media dos retornos de cada 
-    # opt$pm
-    #pf_bh$pm
+    output$t1 <-renderDataTable(opt$pm) 
+    output$t2 <-renderDataTable(pf_bh$pm)
     
     # Print expected portfolio volatility votilidade de cada 
-    # opt$ps
-    #pf_bh$ps
+    output$t3 <- renderDataTable( opt$ps)
+    output$t4 <-renderDataTable(pf_bh$ps)
     
     # Calculate the proportion increase in standard deviation
     # (opt$ps - pf_bh$ps) / (pf_bh$ps)
     
     ####Plota os retornos dos portfolios ?
-    #### plot.zoo(pf_bh$returns)
-    #### plot.zoo(opt$returns)
+    output$plot3 <- renderPlot({ plot.zoo(pf_bh$returns)})
+    output$plot4 <- renderPlot({ plot.zoo(opt$returns)})
     
     output$plot1<-renderPlot({
       ggplot(bov, aes(x = index(bov), y = bov[,6])) + geom_line(color = "darkblue") +
@@ -134,7 +145,15 @@ server <- function(input, output) {
         theme_bw()
     
       })
+    output$plot11<-renderPlot({
+      ggplot(bov, aes(x = index(bov), y = bov[,6])) + geom_line(color = "darkblue") +
+        ggtitle(paste("Série de preços"), input$nomeacao1) +
+        xlab("Data") + ylab("Preço ($)") + theme(plot.title = element_text(hjust = 0.5)) + 
+        scale_x_date(date_labels = "%b %y", date_breaks = "6 months")+
+        theme_bw()
       
+    }) 
+     
     bov_ret <- diff(log(bov[,6]))
     bov_ret <- bov_ret[-1,]
     
@@ -146,6 +165,19 @@ server <- function(input, output) {
         theme_bw()
       
       }) 
+    
+    bov22_ret <- diff(log(bov2[,6]))
+    bov22_ret <- bov22_ret[-1,]
+    
+    output$plot22<-renderPlot({
+      ggplot(bov22_ret, aes(x = index(bov22_ret), y = bov22_ret)) + geom_line(color = "darkblue") +
+        ggtitle(paste("Série de retornos"),input$nomeacao2) + xlab("Data") + ylab("Retorno") +
+        theme(plot.title = element_text(hjust = 0.5)) +
+        scale_x_date(date_labels = "%b %y", date_breaks = "3 months")+
+        theme_bw()
+      
+    }) 
+    
     
     })
     
