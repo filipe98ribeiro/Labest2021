@@ -5,6 +5,7 @@ library(plotly)
 library(forecast)
 library(quantmod)
 library(PerformanceAnalytics)
+library(tidyquant)
 
 ui <- fluidPage(
   
@@ -108,11 +109,12 @@ server <- function(input, output) {
                       from = input$date1, to = input$date2, auto.assign = FALSE)
     bov_ret <- Return.calculate(bov)
     bov2_ret <- Return.calculate(bov2)
-    bov_ret <- bov_ret[(-1),]
-    bov2_ret <- bov2_ret[(-1),]
+    bov_ret <- bov_ret[(-1),] %>% Ad()
+    bov2_ret <- bov2_ret[(-1),] %>% Ad()
     
     eq_weights <- c(0.5, 0.5)
     rets <- cbind(bov_ret, bov2_ret)
+    rets <- rets %>% replace_na(0)
     ######## Create a portfolio using buy and hold
     pf_bh <- Return.portfolio(R = rets, weights = eq_weights, verbose = TRUE)
     ######## Create an optimized portfolio of returns
@@ -124,18 +126,18 @@ server <- function(input, output) {
     # ou extractWeights(opt)
     # Print expected portfolio return media dos retornos de cada 
     output$t1 <-renderDataTable(opt$pm) 
-    output$t2 <-renderDataTable(pf_bh$pm)
+    output$t2 <-renderDataTable(mean(pf_bh$returns))
     
-    # Print expected portfolio volatility votilidade de cada 
-    output$t3 <- renderDataTable( opt$ps)
-    output$t4 <-renderDataTable(pf_bh$ps)
+    # Print expected sd de cada portfolio
+    output$t3 <- renderDataTable(sd(opt$px))
+    output$t4 <- renderDataTable(sd(pf_bh$returns))
     
-    # Calculate the proportion increase in standard deviation
-    # (opt$ps - pf_bh$ps) / (pf_bh$ps)
+    # Calculate the proportion increase in standard deviation acho legal colocar 
+    # (sd(opt$px) - sd(pf_bh$returns)) / (sd(pf_bh$returns))
     
     ####Plota os retornos dos portfolios ?
     output$plot3 <- renderPlot({ plot.zoo(pf_bh$returns)})
-    output$plot4 <- renderPlot({ plot.zoo(opt$returns)})
+    output$plot4 <- renderPlot({ plot.zoo(opt$px)})
     
     output$plot1<-renderPlot({
       ggplot(bov, aes(x = index(bov), y = bov[,6])) + geom_line(color = "darkblue") +
@@ -147,7 +149,7 @@ server <- function(input, output) {
       })
     output$plot11<-renderPlot({
       ggplot(bov, aes(x = index(bov), y = bov[,6])) + geom_line(color = "darkblue") +
-        ggtitle(paste("Série de preços"), input$nomeacao1) +
+        ggtitle(paste("Série de preços"), input$nomeacao2) +
         xlab("Data") + ylab("Preço ($)") + theme(plot.title = element_text(hjust = 0.5)) + 
         scale_x_date(date_labels = "%b %y", date_breaks = "6 months")+
         theme_bw()
