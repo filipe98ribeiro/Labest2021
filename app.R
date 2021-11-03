@@ -6,6 +6,7 @@ library(forecast)
 library(quantmod)
 library(PerformanceAnalytics)
 library(tidyquant)
+library(tseries)
 
 ui <- fluidPage(
   
@@ -39,18 +40,18 @@ ui <- fluidPage(
                     "RDOR3.SA",
                     "^BVSP")),
       selectInput("nomeacao2", "Acao:",
-                c("PETR3.SA",
-                  "VALE3.SA",
-                  "SANB11.SA",
-                  "TRPL4.SA",
+                  c("PETR3.SA",
+                    "VALE3.SA",
+                    "SANB11.SA",
+                    "TRPL4.SA",
                     "HYPE3.SA",
-                  "SBSP3.SA",
-                  "EMBR3.SA",
-                  "PGMN3.SA",
-                  "ITUB4.SA",
-                  "JBSS3.SA",
-                  "RDOR3.SA",
-                  "^BVSP")),
+                    "SBSP3.SA",
+                    "EMBR3.SA",
+                    "PGMN3.SA",
+                    "ITUB4.SA",
+                    "JBSS3.SA",
+                    "RDOR3.SA",
+                    "^BVSP")),
       
       
       actionButton("do", " $$$ ")
@@ -106,7 +107,7 @@ server <- function(input, output) {
     bov <- getSymbols(input$nomeacao, src = "yahoo",
                       from = input$date1, to = input$date2, auto.assign = FALSE)
     bov2 <- getSymbols(input$nomeacao2, src = "yahoo",
-                      from = input$date1, to = input$date2, auto.assign = FALSE)
+                       from = input$date1, to = input$date2, auto.assign = FALSE)
     bov_ret <- Return.calculate(bov)
     bov2_ret <- Return.calculate(bov2)
     bov_ret <- bov_ret[(-1),] %>% Ad()
@@ -145,17 +146,17 @@ server <- function(input, output) {
         xlab("Data") + ylab("Preço ($)") + theme(plot.title = element_text(hjust = 0.5)) + 
         scale_x_date(date_labels = "%b %y", date_breaks = "6 months")+
         theme_bw()
-    
-      })
+      
+    })
     output$plot11<-renderPlot({
-      ggplot(bov, aes(x = index(bov), y = bov[,6])) + geom_line(color = "darkblue") +
+      ggplot(bov, aes(x = index(bov), y = bov2[,6])) + geom_line(color = "darkblue") +
         ggtitle(paste("Série de preços"), input$nomeacao2) +
         xlab("Data") + ylab("Preço ($)") + theme(plot.title = element_text(hjust = 0.5)) + 
         scale_x_date(date_labels = "%b %y", date_breaks = "6 months")+
         theme_bw()
       
     }) 
-     
+    
     bov_ret <- diff(log(bov[,6]))
     bov_ret <- bov_ret[-1,]
     
@@ -166,7 +167,7 @@ server <- function(input, output) {
         scale_x_date(date_labels = "%b %y", date_breaks = "3 months")+
         theme_bw()
       
-      }) 
+    }) 
     
     bov22_ret <- diff(log(bov2[,6]))
     bov22_ret <- bov22_ret[-1,]
@@ -181,13 +182,13 @@ server <- function(input, output) {
     }) 
     
     
-    })
-    
-    
-    
-    
-
-
+  })
+  
+  
+  
+  
+  
+  
 }
 
 
@@ -196,4 +197,3 @@ server <- function(input, output) {
 
 
 shinyApp(ui, server)
-
