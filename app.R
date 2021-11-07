@@ -7,26 +7,38 @@ library(quantmod)
 library(PerformanceAnalytics)
 library(tidyquant)
 library(tseries)
+library(shinydashboard)
+library(shinyWidgets)
 
-ui <- fluidPage(
+ui <- dashboardPage(
   
-  titlePanel("Analises"),
+  dashboardHeader(title = "Analises"),
   
-  sidebarLayout(
+  dashboardSidebar(
+    sidebarMenu(
+      menuItem("Variaveis",tabName = "var1",icon=icon("database")),
+      menuItem("Resultados",tabName = "second",icon=icon("table")),
+      menuItem("Retorno Esperado do Potofoilio",tabName = "var3",icon=icon("table"))
+    )
+  ),
+  dashboardBody(
     
-    sidebarPanel(
+    tabItems(
+    
+      tabItem(tabName = "var1", 
+            fluidRow(column(3,
       
-      dateInput("date1", "Date:",
+        dateInput("date1", "Date:",
                 language = "pt",
                 startview = "year",
                 daysofweekdisabled = c(0,6),
                 value = Sys.Date()-10),
-      dateInput("date2", "Date:",
+        dateInput("date2", "Date:",
                 language = "pt",
                 value = Sys.Date(),
                 daysofweekdisabled = c(0,6)),
       
-      selectInput("nomeacao", "Acao:",#"Nomeração1"? so fiz a principio com 2 pra ve se roda ,se der pode colocar 3 ações 
+        selectInput("nomeacao", "Acao:",
                   c("PETR3.SA",
                     "VALE3.SA",
                     "SANB11.SA",
@@ -39,7 +51,7 @@ ui <- fluidPage(
                     "JBSS3.SA",
                     "RDOR3.SA",
                     "^BVSP")),
-      selectInput("nomeacao2", "Acao:",
+        selectInput("nomeacao2", "Acao:",
                   c("PETR3.SA",
                     "VALE3.SA",
                     "SANB11.SA",
@@ -54,36 +66,50 @@ ui <- fluidPage(
                     "^BVSP")),
       
       
-      actionButton("do", " $$$ ")
+        actionButton("do", " $$$ ")
     ),
     
-    mainPanel(
-      
+      column(4,offset = 2,
       textOutput("result1"),
       textOutput("result2"),
       textOutput("result3"),
-      textOutput("result4"),
-      plotOutput("plot1"),
-      plotOutput("plot11"),
-      plotOutput("plot2"),
-      plotOutput("plot22"),
-      plotOutput("plot3"),
-      plotOutput("plot4"),
-      tableOutput("t1"),
-      tableOutput("t3"),
-      tableOutput("t2"),
-      tableOutput("t4")
-      
-    )
+      textOutput("result4")
+     )
   )
+),
+
+tabItem(tabName = "second",
+        fluidRow(
+          plotOutput("plot1"),
+          plotOutput("plot11"),
+          plotOutput("plot2"),
+          plotOutput("plot22"),
+          plotOutput("plot3"),
+          plotOutput("plot4"),
+        )
+),
+
+tabItem(tabName = "var3",
+        fluidRow(
+          verbatimTextOutput("t1")
+          # dataTableOutput("t3"),
+          # dataTableOutput("t2"),
+          # dataTableOutput("t4")
+        )
 )
+)
+)
+)
+
+
+
 server <- function(input, output) {
   
-  reactive({
-    input$date1
-    input$date2
-    input$nomeacao
-  })
+  # reactive({
+  #   input$date1
+  #   input$date2
+  #   input$nomeacao
+  # })
   
   
   
@@ -126,12 +152,12 @@ server <- function(input, output) {
     names(pf_weights) <- colnames(rets)
     # ou extractWeights(opt)
     # Print expected portfolio return media dos retornos de cada 
-    output$t1 <-renderDataTable(opt$pm) 
-    output$t2 <-renderDataTable(mean(pf_bh$returns))
+    output$t1 <-renderPrint(opt) 
+    # output$t2 <-renderDataTable(mean(pf_bh$returns))
     
     # Print expected sd de cada portfolio
-    output$t3 <- renderDataTable(sd(opt$px))
-    output$t4 <- renderDataTable(sd(pf_bh$returns))
+    # output$t3 <- renderDataTable(sd(opt$px))
+    # output$t4 <- renderDataTable(sd(pf_bh$returns))
     
     # Calculate the proportion increase in standard deviation acho legal colocar 
     # (sd(opt$px) - sd(pf_bh$returns)) / (sd(pf_bh$returns))
